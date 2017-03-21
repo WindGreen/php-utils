@@ -1,6 +1,7 @@
 <?php
 
 $scriptStartTime=microtime();
+$scriptStartMemory=memory_get_usage();
 //error_reporting(0);
 ini_set('display_errors',false);
 set_error_handler('errorHandler');
@@ -27,12 +28,19 @@ function shutdownHandler()
         exception_and_error_log($message,get_errno_type($error['type']));
     }
     //计算脚本执行时间
-    if(isset($GLOBALS['scriptStartTime'])){
+    if(isset($GLOBALS['scriptStartTime']) && isset($GLOBALS['scriptStartMemory'])){
+        $scriptEndMemory=memory_get_usage();
+        $memoryUsed=$scriptEndMemory-$GLOBALS['scriptStartMemory'];
+        $memoryMaxUsed=memory_get_peak_usage()-$GLOBALS['scriptStartMemory'];
         $scriptStartTime=explode(' ',$GLOBALS['scriptStartTime']);
         $scriptEndTime=explode(' ',microtime());
         $time=intval($scriptEndTime[1])-intval($scriptStartTime[1])+floatval($scriptEndTime[0])-floatval($scriptStartTime[0]);
-        $msg=sprintf('[Finished in %fs] %s%s%s',
+        $msg=sprintf('[Finished in %.4fs][MemoryOccupied/Peak/Used: %.2fMB/%.2fMB/%.2fMB] %s %s%s%s',
             $time,
+            $memoryUsed/1024/1024,
+            $memoryMaxUsed/1024/1024,
+            $scriptEndMemory/1024/1024,
+            $_SERVER['REQUEST_METHOD'],
             /*empty($_SERVER['HTTP_HOST']) ? '' :*/ $_SERVER['HTTP_HOST'],
             $_SERVER['PHP_SELF'],
             empty($_SERVER['QUERY_STRING']) ? '' : '?'.$_SERVER['QUERY_STRING']);
